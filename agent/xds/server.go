@@ -328,6 +328,10 @@ func (s *Server) process(stream ADSStream, reqCh <-chan *envoy.DiscoveryRequest)
 			//  2. Non-determinsic order of complex protobuf responses which are
 			//     compared for non-exact JSON equivalence makes the tests uber-messy
 			//     to handle
+
+			// TODO(rb): maintain old and new discovery chains while we are transitioning
+			// TODO(rb): the clusters that we will be using to avoid dropping traffic
+			// TODO(rb): we likely have to do our own fascinating blue/green setup
 			for _, typeURL := range []string{ClusterType, EndpointType, RouteType, ListenerType} {
 				handler := handlers[typeURL]
 				if err := handler.SendIfNew(cfgSnap, configVersion, &nonce); err != nil {

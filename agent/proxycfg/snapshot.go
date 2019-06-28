@@ -1,6 +1,8 @@
 package proxycfg
 
 import (
+	"context"
+
 	"github.com/hashicorp/consul/agent/structs"
 	"github.com/mitchellh/copystructure"
 )
@@ -9,14 +11,20 @@ import (
 // It is meant to be point-in-time coherent and is used to deliver the current
 // config state to observers who need it to be pushed in (e.g. XDS server).
 type ConfigSnapshot struct {
-	Kind              structs.ServiceKind
-	ProxyID           string
-	Address           string
-	Port              int
-	Proxy             structs.ConnectProxyConfig
-	Roots             *structs.IndexedCARoots
-	Leaf              *structs.IssuedCert
-	UpstreamEndpoints map[string]structs.CheckServiceNodes
+	Kind       structs.ServiceKind
+	ProxyID    string
+	Address    string
+	Port       int
+	Proxy      structs.ConnectProxyConfig
+	Datacenter string
+
+	// connect-proxy specific
+	Roots                    *structs.IndexedCARoots
+	Leaf                     *structs.IssuedCert
+	DiscoveryChain           map[string]*structs.CompiledDiscoveryChain // this is keyed by the Upstream.Identifier(), not the chain name
+	WatchedUpstreams         map[string]map[structs.DiscoveryTarget]context.CancelFunc
+	WatchedUpstreamEndpoints map[string]map[structs.DiscoveryTarget]structs.CheckServiceNodes
+	UpstreamEndpoints        map[string]structs.CheckServiceNodes // DEPRECATED:see:WatchedUpstreamEndpoints
 
 	// Skip intentions for now as we don't push those down yet, just pre-warm them.
 }
@@ -25,6 +33,7 @@ type ConfigSnapshot struct {
 func (s *ConfigSnapshot) Valid() bool {
 	switch s.Kind {
 	case structs.ServiceKindConnectProxy:
+		// TODO(rb): sanity check discovery chain things here?
 		return s.Roots != nil && s.Leaf != nil
 	default:
 		return false

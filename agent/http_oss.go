@@ -81,6 +81,7 @@ func init() {
 	registerEndpoint("/v1/coordinate/nodes", []string{"GET"}, (*HTTPServer).CoordinateNodes)
 	registerEndpoint("/v1/coordinate/node/", []string{"GET"}, (*HTTPServer).CoordinateNode)
 	registerEndpoint("/v1/coordinate/update", []string{"PUT"}, (*HTTPServer).CoordinateUpdate)
+	registerEndpoint("/v1/discovery/chain/", []string{"GET"}, (*HTTPServer).ReadDiscoveryChain)
 	registerEndpoint("/v1/event/fire/", []string{"PUT"}, (*HTTPServer).EventFire)
 	registerEndpoint("/v1/event/list", []string{"GET"}, (*HTTPServer).EventList)
 	registerEndpoint("/v1/health/node/", []string{"GET"}, (*HTTPServer).HealthNodeChecks)
