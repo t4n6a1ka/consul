@@ -75,7 +75,7 @@ jobs:
 
       # This loop writes go test results to <reportname>.xml per go package
       - run: |
-          for pkg in $(go list ./... | circleci tests split --split-by=timings --timings-type=classname | tr '\n' ' '); do
+          for pkg in $(go list ./... | grep -v github.com/hashicorp/consul/agent/proxyprocess |circleci tests split --split-by=timings --timings-type=classname | tr '\n' ' '); do
             reportname=$(echo $pkg | cut -d '/' -f3- | sed "s#/#_#g")
             gotestsum --format=short-verbose --junitfile $TEST_RESULTS_DIR/$reportname.xml -- -tags=$GOTAGS $pkg
           done
@@ -294,6 +294,12 @@ jobs:
           paths:
             - ~/project/website/vendor/bundle
 
+      # exclude guides directory since they moved to learn.hashicorp.com
+      # keep index.html which points to learn
+      - run:
+          name: exclude guides
+          command: find ./source/docs/guides -type f -not -name 'index.html.md' -delete
+
       - run:
           name: middleman build
           command: bundle exec middleman build
@@ -325,6 +331,12 @@ jobs:
       - run:
           name: install gems
           command: bundle check || bundle install --path vendor/bundle --retry=3
+
+      # exclude guides directory since they moved to learn.hashicorp.com
+      # keep index.html which points to learn
+      - run:
+          name: exclude guides
+          command: find ./source/docs/guides -type f -not -name 'index.html.md' -delete
 
       # rerun build with 'ENV=production' to add analytics
       - run:
@@ -437,6 +449,13 @@ jobs:
       ENVOY_VERSIONS: "1.9.1"
     steps: *ENVOY_INTEGRATION_TEST_STEPS
 
+  envoy-integration-test-1.10.0:
+    docker:
+      - image: *GOLANG_IMAGE
+    environment:
+      ENVOY_VERSIONS: "1.10.0"
+    steps: *ENVOY_INTEGRATION_TEST_STEPS
+
 workflows:
   version: 2
   build-distros:
@@ -478,6 +497,9 @@ workflows:
           requires:
             - dev-build
       - envoy-integration-test-1.9.1:
+          requires:
+            - dev-build
+      - envoy-integration-test-1.10.0:
           requires:
             - dev-build
   website:
